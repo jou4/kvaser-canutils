@@ -144,7 +144,6 @@ int cansend(int argc, char *argv[]){
 	}
 
 	// Debug
-	pp_canchannel(channel_num, &ch);
 	pp_canframe(&cf);
 
 	kv_initialize();

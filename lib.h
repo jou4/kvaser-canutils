@@ -62,7 +62,7 @@ int parse_canframe(char *cs, can_frame *cf);
 
 void pp_canframe(can_frame *cf);
 void pp_canchannel(int channel_num, can_channel *ch);
-void fprint_log(FILE *stream, can_log *log);
+void fprint_log(FILE *stream, can_log *log, int verbose);
 
 int candump(int argc, char *argv[]);
 int cansend(int argc, char *argv[]);

@@ -236,7 +236,7 @@ const char* format_msg(const unsigned char* msg, unsigned char dlc) {
     return buffer;
 }
 
-void fprint_log(FILE *stream, can_log *log){
+void fprint_log(FILE *stream, can_log *log, int verbose){
 	int flag;
 
 	// microsecond
@@ -263,14 +263,16 @@ void fprint_log(FILE *stream, can_log *log){
     const char* data_str = format_msg(log->frame.msg, log->frame.dlc);
     fprintf(stream, "%s", data_str);
 
-	fprintf(stream, " [%c%c%c%c%c%c%c]",
-		(log->frame.flag & canMSG_EXT)        ? 'x' : ' ',
-		(log->frame.flag & canMSG_RTR)        ? 'R' : ' ',
-		(log->frame.flag & canMSGERR_OVERRUN) ? 'o' : ' ',
-		(log->frame.flag & canMSG_NERR)       ? 'N' : ' ', // TJA 1053/1054 transceivers only
-		(log->frame.flag & canFDMSG_FDF)      ? 'F' : ' ',
-		(log->frame.flag & canFDMSG_BRS)      ? 'B' : ' ',
-		(log->frame.flag & canFDMSG_ESI)      ? 'E' : ' ');
+	if(verbose){
+		fprintf(stream, " [%c%c%c%c%c%c%c]",
+		  (log->frame.flag & canMSG_EXT)        ? 'x' : ' ',
+		  (log->frame.flag & canMSG_RTR)        ? 'R' : ' ',
+		  (log->frame.flag & canMSGERR_OVERRUN) ? 'o' : ' ',
+		  (log->frame.flag & canMSG_NERR)       ? 'N' : ' ', // TJA 1053/1054 transceivers only
+		  (log->frame.flag & canFDMSG_FDF)      ? 'F' : ' ',
+		  (log->frame.flag & canFDMSG_BRS)      ? 'B' : ' ',
+		  (log->frame.flag & canFDMSG_ESI)      ? 'E' : ' ');
+	}
 
     fprintf(stream, "\n");
 }

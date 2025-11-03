@@ -12,6 +12,7 @@ void print_usage_candump(char *arg0, char *arg1)
 	fprintf(stderr, "Usage: %s %s [options] <channel> [<channel> ...]\n", prg, cmd);
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "  -t <type>                      (timestamp: (a)bsolute/(d)elta - default 'a')\n");
+	fprintf(stderr, "  -v                             (verbose CAN flags)\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Format of <channel>: <channel-num>{f|F}{_}{b|B<bitrate>}{d|D<data-bitrate>}\n");
 	fprintf(stderr, "  examples:\n");
@@ -116,6 +117,7 @@ int dequeue_frame(log_queue* queue, can_log* frame) {
 typedef struct {
 	char timestamp_type;
 	uint64_t start_time;
+	int verbose;
 } output_thread_param;
 
 typedef struct {
@@ -171,7 +173,7 @@ DWORD WINAPI output_thread(LPVOID param) {
 	while(!stop_flag){
 		if (dequeue_frame(&log_q, &log) == 0) {
 			adjust_timestamp(&log, tp->timestamp_type, tp->start_time);
-			fprint_log(stdout, &log);
+			fprint_log(stdout, &log, tp->verbose);
 		}else{
 			Sleep(1);
 		}
@@ -181,14 +183,14 @@ DWORD WINAPI output_thread(LPVOID param) {
 	// output all log before exiting
 	while (dequeue_frame(&log_q, &log) == 0){
 		adjust_timestamp(&log, tp->timestamp_type, tp->start_time);
-		fprint_log(stdout, &log);
+		fprint_log(stdout, &log, tp->verbose);
 	}
 
 	return 0;
 }
 
 int candump(int argc, char *argv[]){
-	int i, channel_num;
+	int i, channel_num, verbose;
 	char timestamp_type;
 	can_channel ch;
 	uint64_t start_time;
@@ -202,12 +204,16 @@ int candump(int argc, char *argv[]){
 	}
 
 	timestamp_type = 'a';
+	verbose = 0;
 
 	kv_initialize();
 	memset(channel_threads, '\0', sizeof(thread) * MAX_CHANNELS);
 
 	for(i = 2; i < argc; i++){
-		if(strcmp(argv[i], "-t") == 0){
+		if(strcmp(argv[i], "-v") == 0){
+			verbose = 1;
+		}
+		else if(strcmp(argv[i], "-t") == 0){
 			if(i + 1 >= argc){
 				fprintf(stderr, "Error: Missing bitrate value after %s\n\n", argv[i]);
 				print_usage_candump(argv[0], argv[1]);
@@ -253,6 +259,7 @@ int candump(int argc, char *argv[]){
 	// Run output thread
 	output_tp.timestamp_type = timestamp_type;
 	output_tp.start_time = start_time;
+	output_tp.verbose = verbose;
     output_thread_handle = CreateThread(
         NULL,
         0,

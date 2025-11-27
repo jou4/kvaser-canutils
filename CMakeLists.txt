@@ -62,6 +62,7 @@ set(SOURCES
 	cansend.c
 	canplay.c
 	candump.c
+	list_channels.c
 	linux/lib.c
 )
 

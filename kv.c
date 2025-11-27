@@ -10,6 +10,7 @@ void print_usage(char *arg0)
 	fprintf(stderr, "%s - Kvaser CAN utility.\n\n", prg);
 	fprintf(stderr, "Usage: %s [command] [options]\n", prg);
 	fprintf(stderr, "Command:\n");
+	fprintf(stderr, "  list    list CAN channels.\n");
 	fprintf(stderr, "  dump    dump CAN bus traffic.\n");
 	fprintf(stderr, "  send    send CAN frames.\n");
 	fprintf(stderr, "  play    replay a compact CAN frame logfile to CAN devices.\n");
@@ -21,7 +22,7 @@ void signal_handler(int sig) {
 
 int main(int argc, char *argv[])
 {
-	int i;
+	int res;
 
 	// Signal Handlers
 	signal(SIGINT, signal_handler);
@@ -34,23 +35,24 @@ int main(int argc, char *argv[])
 
 	timeBeginPeriod(1);
 
-	for(i = 1; i < argc; i++){
-		if(strcmp(argv[i], "dump") == 0){
-			return candump(argc, argv);
-		}
-		else if(strcmp(argv[i], "send") == 0){
-			return cansend(argc, argv);
-		}
-		else if(strcmp(argv[i], "play") == 0){
-			return canplay(argc, argv);
-		}
-		else{
-			print_usage(argv[0]);
-			return EXIT_FAILURE;
-		}
+	if(strcmp(argv[1], "list") == 0){
+		res = list_channels(argc, argv);
+	}
+	else if(strcmp(argv[1], "dump") == 0){
+		res = candump(argc, argv);
+	}
+	else if(strcmp(argv[1], "send") == 0){
+		res = cansend(argc, argv);
+	}
+	else if(strcmp(argv[1], "play") == 0){
+		res = canplay(argc, argv);
+	}
+	else{
+		print_usage(argv[0]);
+		return EXIT_FAILURE;
 	}
 
 	timeEndPeriod(1);
 
-	return EXIT_SUCCESS;
+	return res;
 }

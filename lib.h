@@ -71,7 +71,8 @@ int canplay(int argc, char *argv[]);
 
 int kv_initialize(void);
 int kv_setup_channel(int channel_num, can_channel *ch_param);
-void kv_sync_bus_on();
+int kv_time_sync();
+int kv_time_cleanup();
 int kv_write(int channel_num, can_frame *cf);
 int kv_read(int channel_num, long *id, void *msg, unsigned int *dlc, unsigned int *flag, unsigned long *time);
 void kv_close_channel(int channel_num);

@@ -49,19 +49,64 @@ can_channel *kv_channel_info(int channel_num){
 	return &channels[channel_num];
 }
 
-void kv_sync_bus_on(){
+kvTimeDomain time_domain;
+kvTimeDomainData time_data;
+
+int kv_time_sync(){
 	int i;
-	can_channel *ch;
-    for (i = 0; i < MAX_CHANNELS; i++) {
-		ch = &channels[i];
-		if(ch->state)
-			canBusOff(ch->handle);
-    }
-    for (i = 0; i < MAX_CHANNELS; i++) {
-		ch = &channels[i];
-		if(ch->state)
-			canBusOn(ch->handle);
-    }
+    canStatus status;
+
+	status = kvTimeDomainCreate(&time_domain);
+	if (status != canOK) {
+		print_kvaser_error("kvTimeDomainCreate", status);
+		return -1;
+	}
+
+	for(i = 0; i < MAX_CHANNELS; i++){
+		status = kvTimeDomainAddHandle(time_domain, channels[i].channel);
+		if (status != canOK) {
+			print_kvaser_error("kvTimeDomainAddHandle", status);
+			fprintf(stderr, "Failed to add handle %u to TimeDomain, ", channels[i].channel);
+			fprintf(stderr, "status == %d\n", status);
+		}
+	}
+
+	// Request some data from the domain and try to interpret it.
+	status = kvTimeDomainGetData(time_domain, &time_data, sizeof(time_data));
+	if (status != canOK) {
+		print_kvaser_error("kvTimeDomainGetData", status);
+		return -1;
+	}
+	if (time_data.nMagiSyncGroups > 1) {
+		fprintf(stderr, "Consider connecting the Kvaser MagiSync&tm; enabled ");
+		fprintf(stderr, "interfaces through the same USB root hub!");
+	}
+	if (time_data.nMagiSyncGroups == 1) {
+		fprintf(stderr, "All my Kvaser MagiSync&tm; enabled interfaces are ");
+		fprintf(stderr, "connected through the same USB root hub and hence ");
+		fprintf(stderr, "perfectly synchronized!");
+	}
+	if (time_data.nMagiSyncedMembers == MAX_CHANNELS) {
+		printf("All handles have the Kvaser MagiSync&tm; feature enabled!");
+	}
+
+	// Reset the time on all handles in tDomain.
+	status = kvTimeDomainResetTime(time_domain);
+	if (status != canOK) {
+		print_kvaser_error("kvTimeDomainResetTime", status);
+		return -1;
+	}
+	return 0;
+}
+
+int kv_time_cleanup(){
+    canStatus status;
+	status = kvTimeDomainDelete(time_domain);
+	if (status != canOK) {
+		print_kvaser_error("kvTimeDomainDelete", status);
+		return -1;
+	}
+	return 0;
 }
 
 int kv_setup_channel(int channel_num, can_channel *ch_param){

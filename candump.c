@@ -387,7 +387,7 @@ int candump(int argc, char *argv[]){
     }
 
 	start_time = get_unix_time();
-	kv_sync_bus_on();
+	kv_time_sync();
 
 	// Run output thread
 	output_tp.timestamp_type = timestamp_type;
@@ -477,11 +477,14 @@ int candump(int argc, char *argv[]){
 	}
 
     kv_cleanup_channels();
+	kv_time_cleanup();
 
 	return EXIT_SUCCESS;
 
 err:
     kv_cleanup_channels();
+	kv_time_cleanup();
+
     destroy_queue(&log_q);
 	if (file_output) {
     	destroy_queue(&file_q);
